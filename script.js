@@ -130,8 +130,70 @@ function renderResults(items) {
         results.appendChild(card);
     });
 }
+
 // STEP 3 — getJSON(): one careful helper for every request
 // TODO: catch network errors, check 429 and response.ok; rewrite searchShows with try / catch and an empty-array check
+
+// Kinukuha nito ang JSON data at hinahawakan ang mga error sa request.
+async function getJSON(url) {
+    let response;
+
+    try {
+        response = await fetch(url);
+    } catch (networkError) {
+        throw new Error(
+            "Can't reach TVmaze. Check your internet, or set USE_SAMPLE_DATA = true in config.js."
+        );
+    }
+
+    if (response.status === 429) {
+        throw new Error("Too many requests (429). Wait 10 seconds and try again.");
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            USE_SAMPLE_DATA
+                ? "Sample mode only knows: friends, office, breaking bad, stranger things, sherlock, thrones, sample."
+                : `Request failed (HTTP ${response.status}).`
+        );
+    }
+
+    return response.json();
+}
+
+// Hinahanap nito ang TV show at ipinapakita ang result o error message.
+async function searchShows(query) {
+    setStatus(`Searching for "${query}"…`, "loading");
+
+    results.innerHTML = "";
+
+    try {
+        const data = await getJSON(searchURL(query));
+
+        if (data.length === 0) {
+            setStatus(`No shows found for "${query}". Check the spelling.`, "error");
+            return;
+        }
+
+        renderResults(data);
+
+        setStatus(`${data.length} ${data.length === 1 ? "show" : "shows"} found for "${query}"`);
+
+    } catch (error) {
+        setStatus(error.message, "error");
+    }
+}
+
+// Para sa kapag nag-submit ang user ng search at sinisimulan ang paghahanap.
+form.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const query = input.value.trim();
+
+    if (query === "") return;
+
+    searchShows(query);
+});
 
 // STEP 4 — Click a show to see its details
 // TODO: one click listener on #results, showDetails(id), renderDetails(show)
