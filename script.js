@@ -197,6 +197,115 @@ form.addEventListener("submit", (event) => {
 
 // STEP 4 — Click a show to see its details
 // TODO: one click listener on #results, showDetails(id), renderDetails(show)
+// isang listener para sa lahat ng card, binubuksan ang details ng na-click.
+results.addEventListener("click", (event) => {
+    const card = event.target.closest(".card");
+
+    if (card) showDetails(card.dataset.id);
+});
 
 // STEP 5 — Promise.all: show + cast + seasons at the same time
 // TODO: rewrite showDetails with Promise.all, and renderDetails(show, cast, seasons)
+
+async function showDetails(id) {
+    detailsBody.replaceChildren(el("p", "status loading", "Loading details…"));
+
+    dialog.showModal();
+
+    try {
+        const start = performance.now();
+
+        // Get all three requests at the same time
+        const [show, cast, seasons] = await Promise.all([
+            getJSON(showURL(id)),
+            getJSON(castURL(id)),
+            getJSON(seasonsURL(id))
+        ]);
+
+        console.log(`3 requests in ${Math.round(performance.now() - start)} ms`);
+
+        renderDetails(show, cast, seasons);
+
+    } catch (error) {
+        detailsBody.replaceChildren(
+            el("p", "status error", error.message)
+        );
+    }
+}
+
+// ginagawa ang laman ng pop-up gamit ang show, cast, at seasons.
+function renderDetails(show, cast, seasons) {
+    const where = show.network
+        ? show.network.name
+        : show.webChannel
+            ? show.webChannel.name
+            : "";
+
+    const minutes = show.runtime || show.averageRuntime;
+
+    const seasonText = seasons.length === 1
+        ? "1 season"
+        : `${seasons.length} seasons`;
+
+    const info = el("div", "info");
+
+    info.append(
+        el("h2", "", show.name),
+
+        el(
+            "p",
+            "meta",
+            [yearRange(show), where, seasonText, minutes ? `${minutes} min` : ""]
+                .filter(Boolean)
+                .join(" · ")
+        ),
+
+        el("p", "meta", show.genres.join(", ")),
+
+        el(
+            "p",
+            "score",
+            show.rating.average ? `★ ${show.rating.average} / 10` : "Not rated yet"
+        ),
+
+        el("p", "plot", stripTags(show.summary))
+    );
+
+
+    // piniprint and unang 6 na cast members
+    if (cast.length > 0) {
+        const list = el("ul", "cast");
+
+        cast.slice(0, 6).forEach((member) => {
+            const li = el("li", "", member.person.name + " ");
+
+            li.append(
+                el("span", "", "as " + member.character.name)
+            );
+
+            list.append(li);
+        });
+
+        info.append(el("h3", "", "Cast"), list);
+    }
+
+
+    // TVmaze link
+    const links = el("p", "links");
+
+    const tvmaze = el("a", "", "View on TVmaze ");
+
+    tvmaze.href = show.url;
+    tvmaze.target = "_blank";
+
+    links.append(tvmaze);
+
+    info.append(links);
+
+
+    // ipinapakita ang poster at info sa pop-up
+    detailsBody.replaceChildren(
+        createPoster(show, "original"),
+        info
+    );
+}
