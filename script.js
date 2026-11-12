@@ -17,6 +17,7 @@ const detailsBody = document.getElementById("detailsBody");
 const closeBtn = document.getElementById("closeDetails");
 const modeBadge = document.getElementById("modeBadge");
 
+
 // ---------- Given: the API's URLs ----------
 const API = "https://api.tvmaze.com";
 
@@ -129,6 +130,40 @@ function renderResults(items) {
 
         results.appendChild(card);
     });
+}
+
+// Ipinapakita ang mga saved favorite shows.
+function renderFavorites() {
+    const favoriteList = document.getElementById("favoritesList");
+
+    favoriteList.innerHTML = "";
+
+    if (favorites.length === 0) {
+        favoriteList.append(el("p", "", "No favorites yet."));
+        return;
+    }
+
+    favorites.forEach((show) => {
+        favoriteList.append(el("p", "favorite-item", "★ " + show.name));
+    });
+}
+
+// Sine-save o tinatanggal ang show sa favorites.
+function saveFavorite(show) {
+    const exists = favorites.some((item) => item.id === show.id);
+
+    if (exists) {
+        favorites = favorites.filter((item) => item.id !== show.id);
+    } else {
+        favorites.push({
+            id: show.id,
+            name: show.name
+        });
+    }
+
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+
+    renderFavorites();
 }
 
 // STEP 3 — getJSON(): one careful helper for every request
@@ -249,6 +284,32 @@ function renderDetails(show, cast, seasons) {
 
     const info = el("div", "info");
 
+    // Button para idagdag o tanggalin ang show sa favorites.
+    const favoriteBtn = el(
+        "button",
+        "favorite-btn",
+        favorites.some((item) => item.id === show.id)
+            ? "★ Remove from Favorites"
+            : "☆ Add to Favorites"
+    );
+
+    favoriteBtn.type = "button";
+
+    favoriteBtn.addEventListener("click", () => {
+        saveFavorite({
+            id: show.id,
+            name: show.name
+        });
+
+        favoriteBtn.textContent = favorites.some(
+            (item) => item.id === show.id
+        )
+            ? "★ Remove from Favorites"
+            : "☆ Add to Favorites";
+    });
+
+    info.append(favoriteBtn);
+
     info.append(
         el("h2", "", show.name),
 
@@ -309,3 +370,8 @@ function renderDetails(show, cast, seasons) {
         info
     );
 }
+
+// Kinukuha ang saved favorites kapag nag-load ang page.
+let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+
+renderFavorites();
