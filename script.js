@@ -103,30 +103,33 @@ modeBadge.classList.toggle("live", !USE_SAMPLE_DATA);
 // STEP 1 — Your first API request
 // TODO: async function testRequest(): fetch searchURL("friends"), log the status and the JSON array
 
-// Para sa kung nakakakuha ng data sa API.
-async function testRequest() {
-    const url = searchURL("friends");
-
-    console.log("Request:", url);
-
-    const response = await fetch(url);
-
-    console.log("Status:", response.status, "ok?", response.ok);
-
-    const data = await response.json();
-
-    console.log(data);
-
-    console.log("How many:", data.length);
-
-    console.log("First show:", data[0].show.name, data[0].show.premiered);
-}
-
-testRequest();
-
 // STEP 2 — Search and show the results
 // TODO: renderResults(items), searchShows(query), and a submit listener on the form
 
+// Pinapakita nito ang poster at impormasyon ng mga nahanap na TV show.
+function renderResults(items) {
+    results.innerHTML = "";
+
+    items.forEach((item) => {
+        const show = item.show;
+
+        const card = el("button", "card");
+        card.type = "button";
+        card.dataset.id = show.id;
+
+        const rating = show.rating.average;
+
+        card.append(
+            createPoster(show),
+            el("span", "title", show.name),
+            el("span", "year", yearRange(show)),
+            el("span", "genres", show.genres.join(", ")),
+            el("span", "rating", rating ? `★ ${rating}` : "Not rated yet")
+        );
+
+        results.appendChild(card);
+    });
+}
 // STEP 3 — getJSON(): one careful helper for every request
 // TODO: catch network errors, check 429 and response.ok; rewrite searchShows with try / catch and an empty-array check
 
