@@ -103,6 +103,27 @@ modeBadge.classList.toggle("live", !USE_SAMPLE_DATA);
 // STEP 1 — Your first API request
 // TODO: async function testRequest(): fetch searchURL("friends"), log the status and the JSON array
 
+// Para sa kung nakakakuha ng data sa API.
+async function testRequest() {
+    const url = searchURL("friends");
+
+    console.log("Request:", url);
+
+    const response = await fetch(url);
+
+    console.log("Status:", response.status, "ok?", response.ok);
+
+    const data = await response.json();
+
+    console.log(data);
+
+    console.log("How many:", data.length);
+
+    console.log("First show:", data[0].show.name, data[0].show.premiered);
+}
+
+testRequest();
+
 // STEP 2 — Search and show the results
 // TODO: renderResults(items), searchShows(query), and a submit listener on the form
 
